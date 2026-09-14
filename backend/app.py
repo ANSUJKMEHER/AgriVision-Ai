@@ -55,10 +55,14 @@ HEAT_SIZE = 450
 # Look for the checkpoint in a few common locations.
 CHECKPOINT_CANDIDATES = [
     os.environ.get("AGRI_MODEL", ""),
+    "agrivision_mobilenetv2_plantvillage.pth",
     "agrivision_output/agrivision_mobilenetv2_plantvillage.pth",
     "ml_pipeline/agrivision_output/agrivision_mobilenetv2_plantvillage.pth",
     "../ml_pipeline/agrivision_output/agrivision_mobilenetv2_plantvillage.pth",
+    str(Path(__file__).resolve().parent.parent / "agrivision_mobilenetv2_plantvillage.pth"),
+    str(Path(__file__).resolve().parent.parent / "ml_pipeline" / "agrivision_output" / "agrivision_mobilenetv2_plantvillage.pth"),
 ]
+
 
 
 # --------------------------------------------------------------------------- #
