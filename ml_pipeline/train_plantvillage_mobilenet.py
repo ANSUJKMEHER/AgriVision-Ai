@@ -27,6 +27,7 @@ import time
 import copy
 import csv
 import glob
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -72,7 +73,7 @@ np.random.seed(SEED)
 # --------------------------------------------------------------------------- #
 # Dataset discovery
 # --------------------------------------------------------------------------- #
-def _find_train_dir(root: Path, max_depth: int = 4) -> Path | None:
+def _find_train_dir(root: Path, max_depth: int = 8) -> Path | None:
     """Bounded directory walk that finds a folder containing a `train` subdir."""
     root = Path(root)
     if not root.exists():
@@ -93,6 +94,28 @@ def _find_train_dir(root: Path, max_depth: int = 4) -> Path | None:
     return None
 
 
+def _try_extract_zips(base: Path) -> Path | None:
+    """If the dataset shipped as a .zip (Kaggle does not always auto-extract),
+    extract it into ./data and return the train/ folder if found."""
+    base = Path(base)
+    if not base.is_dir():
+        return None
+    zips = list(base.glob("*.zip")) + list(base.glob("*/*.zip"))
+    for zp in zips:
+        dest = Path("./data")
+        dest.mkdir(exist_ok=True)
+        try:
+            with zipfile.ZipFile(zp) as z:
+                z.extractall(dest)
+            print(f"[AgriVision] Extracted {zp} -> {dest}")
+            train = _find_train_dir(dest)
+            if train is not None:
+                return train
+        except Exception as e:
+            print(f"[AgriVision] Could not unzip {zp}: {e}")
+    return None
+
+
 def resolve_data_dir():
     """Locate the PlantVillage `train` folder and its `valid`/`val` sibling."""
     candidates = [DATA_DIR] if DATA_DIR else [
@@ -107,6 +130,8 @@ def resolve_data_dir():
             continue
         train = _find_train_dir(Path(base))
         if train is None:
+            train = _try_extract_zips(Path(base))
+        if train is None:
             continue
         valid = train.parent / "valid"
         if not valid.is_dir():
@@ -117,10 +142,25 @@ def resolve_data_dir():
         print(f"[AgriVision] Dataset located: train={train}")
         print(f"[AgriVision] Validation split : {valid if valid else 'auto-split from train (90/10)'}")
         return train, valid
-    raise FileNotFoundError(
-        "Could not locate the PlantVillage dataset. "
-        "Set AGRI_DATA_DIR to the dataset root (the folder containing `train/` and `valid/`)."
-    )
+
+    # --- Diagnostic: show the user exactly what we can see ---
+    print("\n[AgriVision] ERROR: could not locate the PlantVillage dataset.")
+    print("[AgriVision] Here is what is visible on this machine:")
+    for probe in ["/kaggle/input", "./data", "."]:
+        p = Path(probe)
+        if not p.exists():
+            print(f"  {p}/  -> (does not exist)")
+            continue
+        try:
+            entries = sorted(e.name for e in p.iterdir())[:30]
+            print(f"  {p}/  -> {entries}")
+        except Exception as e:
+            print(f"  {p}/  -> (unreadable: {e})")
+    print("\n[AgriVision] FIX — do ONE of the following:")
+    print("  1. On Kaggle, click 'Add Input' -> 'Datasets' -> search 'new-plant-diseases-dataset' and add it.")
+    print("  2. If the folder is named differently, set AGRI_DATA_DIR to the folder containing 'train/' and 'valid/'.")
+    print("     e.g.  os.environ['AGRI_DATA_DIR'] = '/kaggle/input/new-plant-diseases-dataset/New Plant Diseases Dataset(Augmented)/New Plant Diseases Dataset(Augmented)'")
+    raise FileNotFoundError("Could not locate the PlantVillage dataset (see diagnostic above).")
 
 
 # --------------------------------------------------------------------------- #
