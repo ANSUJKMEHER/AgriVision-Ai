@@ -63,6 +63,16 @@ DATA_DIR = os.environ.get("AGRI_DATA_DIR", "")
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# Guard against too-old GPUs (e.g. Tesla P100 / sm_60) that newer PyTorch dropped.
+if DEVICE.type == "cuda":
+    _cap = torch.cuda.get_device_capability(0)
+    if _cap[0] < 7:
+        raise RuntimeError(
+            f"[AgriVision] This GPU has compute capability {_cap[0]}.{_cap[1]} "
+            f"(e.g. Tesla P100), which the installed PyTorch no longer supports "
+            f"(it needs >= 7.0). Switch the Kaggle accelerator to 'T4 x2' and re-run."
+        )
+
 OUT_DIR = Path("agrivision_output")
 OUT_DIR.mkdir(exist_ok=True)
 
