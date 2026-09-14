@@ -7,6 +7,7 @@ sdk: gradio
 sdk_version: 4.44.1
 app_file: app.py
 pinned: false
+suggested_hardware: cpu-basic
 ---
 # 🌾 AgriVision AI — Intelligent Crop Disease & Foliar Pathology Scanner
 
