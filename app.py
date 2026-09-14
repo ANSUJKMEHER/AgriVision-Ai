@@ -1,14 +1,25 @@
+import sys
+try:
+    import spaces
+except ImportError:
+    import types
+    spaces = types.ModuleType("spaces")
+    def _gpu(fn=None, *args, **kwargs):
+        if callable(fn):
+            return fn
+        return lambda f: f
+    spaces.GPU = _gpu
+    sys.modules["spaces"] = spaces
+
+import spaces
+
+@spaces.GPU(duration=1)
+def dummy_gpu():
+    return None
+
 import uvicorn
 import gradio as gr
 from backend.app import app as fastapi_app
-
-try:
-    import spaces
-    @spaces.GPU(duration=1)
-    def dummy_gpu():
-        return None
-except Exception:
-    pass
 
 
 # Create a minimal Gradio UI to satisfy Hugging Face Spaces
