@@ -1,6 +1,6 @@
 ---
 title: Agrivision Api
-emoji: ??
+emoji: 🌍
 colorFrom: green
 colorTo: blue
 sdk: gradio
