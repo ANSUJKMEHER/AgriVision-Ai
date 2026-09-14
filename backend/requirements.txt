@@ -1,0 +1,9 @@
+# AgriVision AI — Inference backend dependencies
+fastapi
+uvicorn[standard]
+python-multipart
+torch>=2.0
+torchvision>=0.15
+numpy
+pillow
+matplotlib

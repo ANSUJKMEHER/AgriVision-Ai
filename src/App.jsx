@@ -11,6 +11,9 @@ import { processFoliarGradCam } from './utils/gradCamEngine';
 import { generateAgronomistReport } from './utils/pdfReportGenerator';
 import { Sparkles, Download, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 
+// Backend API base URL. Override with a VITE_API_URL entry in a `.env` file.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function App() {
   // Current active specimen state
   const [currentImage, setCurrentImage] = useState(SAMPLE_LEAVES[0].imageUrl);
@@ -30,6 +33,8 @@ export default function App() {
   const [isPipelineModalOpen, setIsPipelineModalOpen] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [modelStatus, setModelStatus] = useState('demo'); // 'demo' | 'live'
+  const [uploadedFile, setUploadedFile] = useState(null);  // dataURL of last upload
 
   // Analyze leaf whenever image or colormap changes
   const runAnalysis = async (imgSrc, sampleMeta = null, currentCmap = colormap) => {
@@ -74,6 +79,25 @@ export default function App() {
     runAnalysis(SAMPLE_LEAVES[0].imageUrl, SAMPLE_LEAVES[0], colormap);
   }, []);
 
+  // Probe whether a trained-model backend is reachable
+  useEffect(() => {
+    fetch(`${API_URL}/health`)
+      .then((r) => r.json())
+      .then((d) => setModelStatus(d.model_loaded ? 'live' : 'demo'))
+      .catch(() => setModelStatus('demo'));
+  }, []);
+
+  // Send an image to the FastAPI backend for real MobileNetV2 inference + Grad-CAM
+  const predictRemote = async (dataUrl, colormapName) => {
+    const blob = await (await fetch(dataUrl)).blob();
+    const fd = new FormData();
+    fd.append('file', blob, 'leaf.jpg');
+    fd.append('colormap', colormapName);
+    const res = await fetch(`${API_URL}/predict`, { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(`predict failed: ${res.status}`);
+    return await res.json();
+  };
+
   // Handle switching sample leaf from carousel
   const handleSelectSample = (sample) => {
     setSelectedSampleId(sample.id);
@@ -85,37 +109,70 @@ export default function App() {
   };
 
   // Handle uploading custom leaf photo
-  const handleFileUpload = (dataUrl, fileName) => {
+  const handleFileUpload = async (dataUrl, fileName) => {
     setSelectedSampleId(null);
     setCurrentImage(dataUrl);
+    setUploadedFile(dataUrl);
 
-    // Smart heuristic classifier fallback for uploaded images
-    // If filename hints at disease, use it; otherwise assign representative foliar pathology
-    let detectedClass = "Tomato___Early_blight";
-    const lowerName = fileName.toLowerCase();
-    if (lowerName.includes("potato") && lowerName.includes("late")) {
-      detectedClass = "Potato___Late_blight";
-    } else if (lowerName.includes("rust") || lowerName.includes("corn")) {
-      detectedClass = "Corn_(maize)___Common_rust";
-    } else if (lowerName.includes("grape") || lowerName.includes("black")) {
-      detectedClass = "Grape___Black_rot";
-    } else if (lowerName.includes("bacterial") || lowerName.includes("pepper")) {
-      detectedClass = "Pepper__bell___Bacterial_spot";
-    } else if (lowerName.includes("healthy")) {
-      detectedClass = "Tomato___healthy";
+    try {
+      // 1) Try the live MobileNetV2 backend first
+      setIsScanning(true);
+      const pred = await predictRemote(dataUrl, colormap);
+      setModelStatus('live');
+      setDiseaseData(getDiseaseDetails(pred.class_id));
+      setConfidence(pred.confidence ?? 0.96);
+      setHeatmapUrl(pred.heatmap_base64 || null);
+      setFoliarDamagePercent(pred.damage_percent ?? 0);
+      setSeverityLevel(pred.severity ?? 'None');
+      setLesionClusters((pred.lesion_boxes || []).map((b) => ({
+        x: b.x ?? 0.4, y: b.y ?? 0.4, width: b.w ?? 0.15, height: b.h ?? 0.15,
+        confidence: Math.round((b.confidence ?? 0.8) * 100), label: 'Lesion'
+      })));
+      setIsScanning(false);
+    } catch (err) {
+      // 2) Fallback to heuristic demo classifier when no backend is running
+      setModelStatus('demo');
+      let detectedClass = "Tomato___Early_blight";
+      const lowerName = fileName.toLowerCase();
+      if (lowerName.includes("potato") && lowerName.includes("late")) {
+        detectedClass = "Potato___Late_blight";
+      } else if (lowerName.includes("rust") || lowerName.includes("corn")) {
+        detectedClass = "Corn_(maize)___Common_rust_";
+      } else if (lowerName.includes("grape") || lowerName.includes("black")) {
+        detectedClass = "Grape___Black_rot";
+      } else if (lowerName.includes("bacterial") || lowerName.includes("pepper")) {
+        detectedClass = "Pepper,_bell___Bacterial_spot";
+      } else if (lowerName.includes("healthy")) {
+        detectedClass = "Tomato___healthy";
+      }
+
+      setDiseaseData(getDiseaseDetails(detectedClass));
+      setConfidence(0.965);
+      runAnalysis(dataUrl, { classId: detectedClass }, colormap);
     }
-
-    const disease = PLANT_DISEASES[detectedClass] || getDiseaseDetails(detectedClass);
-    setDiseaseData(disease);
-    setConfidence(0.965);
-    runAnalysis(dataUrl, { classId: detectedClass }, colormap);
   };
 
   // Handle Colormap Change
-  const handleChangeColormap = (newCmap) => {
+  const handleChangeColormap = async (newCmap) => {
     setColormap(newCmap);
     const activeSample = SAMPLE_LEAVES.find(s => s.id === selectedSampleId);
-    runAnalysis(currentImage, activeSample, newCmap);
+
+    if (activeSample) {
+      runAnalysis(currentImage, activeSample, newCmap);
+    } else if (uploadedFile && modelStatus === 'live') {
+      try {
+        const pred = await predictRemote(uploadedFile, newCmap);
+        setHeatmapUrl(pred.heatmap_base64 || null);
+        setFoliarDamagePercent(pred.damage_percent ?? 0);
+        setSeverityLevel(pred.severity ?? 'None');
+        setLesionClusters((pred.lesion_boxes || []).map((b) => ({
+          x: b.x ?? 0.4, y: b.y ?? 0.4, width: b.w ?? 0.15, height: b.h ?? 0.15,
+          confidence: Math.round((b.confidence ?? 0.8) * 100)
+        })));
+      } catch (e) { /* keep current heatmap on transient error */ }
+    } else {
+      runAnalysis(currentImage, null, newCmap);
+    }
   };
 
   // Handle Downloading the PDF Report
@@ -153,6 +210,20 @@ export default function App() {
         onDownloadReport={handleDownloadReport}
         hasResult={!!heatmapUrl}
       />
+
+      {/* Live / Demo model status indicator */}
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold border ${
+          modelStatus === 'live'
+            ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+            : 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+        }`}>
+          <span className={`w-2 h-2 rounded-full ${modelStatus === 'live' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+          {modelStatus === 'live'
+            ? 'Live MobileNetV2 inference connected'
+            : 'Demo mode — train the model & start the backend for live inference'}
+        </div>
+      </div>
 
       {/* Main Content Dashboard */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">

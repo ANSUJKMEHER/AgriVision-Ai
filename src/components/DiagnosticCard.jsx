@@ -41,6 +41,12 @@ export default function DiagnosticCard({
           icon: <Dna className="w-3.5 h-3.5" />,
           label: 'VIRAL INFECTION'
         };
+      case 'Pest (Arthropod)':
+        return {
+          bg: 'bg-orange-500/15 border-orange-500/30 text-orange-300',
+          icon: <Bug className="w-3.5 h-3.5" />,
+          label: 'ARTHROPOD PEST'
+        };
       default:
         return {
           bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',

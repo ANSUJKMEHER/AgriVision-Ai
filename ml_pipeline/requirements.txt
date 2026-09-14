@@ -1,0 +1,10 @@
+# AgriVision AI - ML pipeline dependencies
+torch>=2.0
+torchvision>=0.15
+numpy
+pillow
+matplotlib
+scikit-learn
+# optional, only needed for export_onnx.py
+onnx
+onnxruntime

@@ -1,107 +1,114 @@
 # 🌾 AgriVision AI — Intelligent Crop Disease & Foliar Pathology Scanner
 
-> An AI-powered foliar pathology scanner built to detect crop diseases from leaf photographs, localize lesion spots with **Grad-CAM heatmaps**, evaluate foliar damage severity, deliver instant **Treatment & Preventive Prescriptions**, and compile downloadable **Agronomist Field Inspection PDF Reports**.
+An AI-powered foliar pathology scanner that detects crop diseases from leaf photos, localizes lesions with **Grad-CAM heatmaps**, grades foliar damage, delivers instant **Treatment & Preventive Prescriptions**, and compiles a downloadable **Agronomist Field Inspection PDF Report**.
+
+Built with a **React (Vite)** frontend, a **PyTorch MobileNetV2** model, and a **FastAPI** inference backend.
 
 ---
 
-## 🌟 Key Features
+## ✨ Features
 
-- **🔬 Real-Time Grad-CAM Foliar Pathology Visualizer**:
-  - Highlights precise lesion necrosis spots and chlorotic halos.
-  - **4 Scientific Colormaps**: Turbo (spectral rainbow), Jet (thermal), Inferno (fiery contrast), and Magma.
-  - **3 Inspection View Modes**: Overlay Blend (with continuous opacity slider & lesion bounding boxes), Split Comparison Curtain (interactive before/after slider), and Side-by-Side dual viewport.
-  - **Quantitative Severity Metric**: Calculates affected leaf surface percentage, severity level (Mild, Moderate, Severe, Critical), and lesion cluster count.
-
-- **🌿 PlantVillage 38-Class Agronomic Ontology**:
-  - Full diagnostic support for 14 major crop species across 38 classes (Tomato, Potato, Corn, Grape, Apple, Bell Pepper, Peach, Orange, Strawberry, etc.).
-  - Pathogen classification: **Fungal / Oomycete**, **Bacterial**, **Viral**, and **Healthy Foliage**.
-  - Scientific binomials (*Alternaria solani*, *Phytophthora infestans*, *Puccinia sorghi*, etc.), microclimate transmission conditions, and top-3 differential diagnoses.
-
-- **💊 Instant Treatment & Preventive Prescription (Rx)**:
-  - **Chemical Interventions**: Active ingredients (Mancozeb 75% WP, Chlorothalonil, Azoxystrobin, Metalaxyl), trade names, dosage per liter/hectare, Re-Entry Intervals (REI), and Pre-Harvest Intervals (PHI).
-  - **Bio-Organic & Biocontrol**: *Trichoderma viride*, *Bacillus subtilis*, cold-pressed Neem seed oil (1500ppm), and OMRI-approved minerals.
-  - **14-Day Action Roadmap**: Step-by-step spray calendar (Day 1 knock-down, Day 3 moisture audit, Day 7 systemic rotation, Day 14 scouting audit).
-  - **Sprayer Tank Mixer**: Built-in interactive calculator for knapsack, backpack, and boom sprayers.
-
-- **📑 Downloadable Agronomist Field Inspection PDF Report**:
-  - Publication-grade diagnostic certificate featuring dual optical & Grad-CAM images, quantitative lesion metrics, complete Rx tables, and digital verification seal.
-
-- **⚡ Academic PyTorch ML Architecture**:
-  - Transfer learning script with MobileNetV2 backbone, GAP gradient weights hook, and cosine annealing scheduler achieving 97.4% validation accuracy on the PlantVillage dataset.
+- **🔬 Grad-CAM visualizer** — 4 colormaps (Turbo / Jet / Inferno / Magma), 3 view modes (Overlay / Split / Side-by-side), opacity slider, lesion bounding boxes, and a quantitative severity metric.
+- **🌿 PlantVillage 38-class ontology** — 14 crops, pathogen classification (Fungal / Oomycete / Bacterial / Viral / Pest / Healthy), scientific binomials, and top-3 differential diagnoses.
+- **💊 Prescription suite** — chemical active ingredients & trade names, bio-organic/biocontrol options, a 14-day intervention roadmap, and a knapsack tank-mixer calculator.
+- **📑 PDF report** — publication-grade agronomist field inspection certificate (jsPDF).
+- **⚙️ Real ML pipeline** — MobileNetV2 transfer learning + real Grad-CAM, served via FastAPI with a graceful demo-mode fallback.
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js (v18+)
-- npm (v9+)
-- (Optional for training script) Python 3.10+ with PyTorch
-
-### Installation & Running Locally
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/ANSUJKMEHER/AgriVision-Ai.git
-   cd AgriVision-Ai
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Build for production**:
-   ```bash
-   npm run build
-   ```
-
----
-
-## 🧠 Model Architecture & Grad-CAM Math
-
-- **Backbone**: MobileNetV2 (Inverted Residuals & Linear Bottlenecks)
-- **Target Feature Layer**: `features[-1]` (Conv2d 1x1 before Global Average Pooling)
-- **Grad-CAM Weight Formulation**:
-  $$\alpha_k^c = \frac{1}{Z}\sum_{i=1}^u \sum_{j=1}^v \frac{\partial Y^c}{\partial A_{ij}^k}$$
-- **Heatmap Generation**:
-  $$L_{\text{Grad-CAM}}^c = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)$$
-
----
-
-## 📂 Project Structure
+## 📂 Project structure
 
 ```
-agri/
-├── index.html
-├── package.json
-├── vite.config.js
-├── ml_pipeline/
-│   └── train_plantvillage_mobilenet.py  # PyTorch MobileNetV2 + Grad-CAM script
+AgriVision-AI/
+├── index.html, package.json, vite.config.js   # Vite + React + Tailwind
 ├── src/
-│   ├── App.jsx                          # Main application dashboard
-│   ├── index.css                        # Design system & glassmorphism tokens
-│   ├── components/
-│   │   ├── Header.jsx                   # Telemetry bar & controls
-│   │   ├── UploadSection.jsx            # Multi-mode upload & leaf selector
-│   │   ├── GradCamViewer.jsx            # Real-time Grad-CAM visualizer & slider
-│   │   ├── DiagnosticCard.jsx           # Pathology metrics & differential diagnoses
-│   │   ├── PrescriptionSection.jsx      # Chemical & bio-organic prescription suite
-│   │   └── ModelPipelineModal.jsx       # Academic ML architecture modal
+│   ├── App.jsx                                 # Main dashboard + backend integration
+│   ├── components/                             # Header, Upload, Grad-CAM viewer, Diagnostic card,
+│   │                                           # Prescription, ML pipeline modal
 │   ├── data/
-│   │   ├── plantDiseasesData.js         # Master 38-class PlantVillage database
-│   │   └── sampleLeaves.js              # Curated botanical specimen presets
+│   │   ├── plantDiseasesData.js                # 38-class disease database (NEW)
+│   │   └── sampleLeaves.js                     # Bundled demo specimens (NEW)
 │   └── utils/
-│       ├── gradCamEngine.js             # Client-side Grad-CAM synthesis & colormaps
-│       └── pdfReportGenerator.js        # jsPDF Agronomist Field Report generator
+│       ├── gradCamEngine.js                    # Client-side Grad-CAM visualizer
+│       └── pdfReportGenerator.js               # jsPDF report generator
+├── public/samples/                             # 10 bundled PlantVillage leaf photos (NEW)
+├── backend/
+│   ├── app.py                                  # FastAPI inference API (NEW)
+│   └── requirements.txt
+├── ml_pipeline/
+│   ├── train_plantvillage_mobilenet.py         # Complete training pipeline (NEW — fixed & runnable)
+│   ├── predict.py                              # CLI inference + Grad-CAM (NEW)
+│   ├── export_onnx.py                          # Optional ONNX export (NEW)
+│   └── requirements.txt
+├── TRAINING_GUIDE.md                           # Step-by-step training walkthrough
+└── README.md
 ```
 
 ---
 
-## 📜 License
-MIT License. Created for agricultural AI research, crop security, and precision pathology diagnostics.
+## 🚀 Quick start (frontend — works immediately in demo mode)
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+```
+
+The app runs in **demo mode** out of the box (preloaded specimens + heuristic classification + client-side visualization). No model or backend required.
+
+---
+
+## 🧠 Train the model (later)
+
+The full walkthrough is in **[TRAINING_GUIDE.md](./TRAINING_GUIDE.md)**. In short:
+
+1. Open the dataset on Kaggle and start a GPU notebook:
+   https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset
+2. Run `ml_pipeline/train_plantvillage_mobilenet.py` (auto-detects the dataset path).
+3. Download the produced `agrivision_output/agrivision_mobilenetv2_plantvillage.pth` into this repo (next to `ml_pipeline/`).
+
+Expected: **~96–98% validation accuracy** in 8 epochs.
+
+---
+
+## 🔌 Run live inference (once trained)
+
+```bash
+cd backend
+pip install -r requirements.txt
+
+# place the checkpoint where the backend can find it, e.g.:
+#   ml_pipeline/agrivision_output/agrivision_mobilenetv2_plantvillage.pth
+
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+Then reload the frontend — the status pill switches to **"Live MobileNetV2 inference connected"** and uploaded photos are classified by the real model (real Grad-CAM included).
+
+The frontend calls `http://localhost:8000` by default. To change it, create a `.env`:
+
+```bash
+# .env
+VITE_API_URL=http://localhost:8000
+```
+
+---
+
+## 🔄 How the pieces connect
+
+```
+Leaf photo ──▶ React frontend ──POST /predict──▶ FastAPI backend ──▶ MobileNetV2
+     │                                                   │
+     │  ◀── JSON: class_id, confidence, top_k,          │
+     │        heatmap (base64), severity, lesion boxes  │
+     ▼                                                   ▼
+  Disease DB lookup + Grad-CAM render          real Grad-CAM (PyTorch hooks)
+```
+
+- **Demo mode** (no model): heuristic classification + client-side visualization — good for UI demos.
+- **Live mode** (model trained + backend running): real MobileNetV2 classification + real Grad-CAM.
+
+---
+
+## 📜 License & attribution
+
+MIT License. Sample leaf photos are from the [PlantVillage dataset](https://github.com/spMohanty/PlantVillage-Dataset) (Penn State, CC-BY) — for academic use with attribution. Created for agricultural AI research, crop security, and precision pathology diagnostics.

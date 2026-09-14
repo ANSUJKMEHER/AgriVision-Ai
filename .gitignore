@@ -35,7 +35,7 @@ wheels/
 *.pth
 *.pt
 *.onnx
-data/
+/data/
 *.h5
 
 # Logs
