@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/demo.webp" alt="AgriVision AI Dashboard" width="100%">
+  <img src="assets/demo.png" alt="AgriVision AI Dashboard" width="100%">
   
   <h1>🌾 AgriVision AI</h1>
   <p><b>Intelligent Crop Disease & Foliar Pathology Scanner</b></p>
