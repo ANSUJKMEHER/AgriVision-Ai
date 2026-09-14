@@ -2,6 +2,15 @@ import uvicorn
 import gradio as gr
 from backend.app import app as fastapi_app
 
+try:
+    import spaces
+    @spaces.GPU(duration=1)
+    def dummy_gpu():
+        return None
+except Exception:
+    pass
+
+
 # Create a minimal Gradio UI to satisfy Hugging Face Spaces
 with gr.Blocks(title="AgriVision AI") as demo:
     gr.Markdown("# 🌱 AgriVision AI Backend API")
