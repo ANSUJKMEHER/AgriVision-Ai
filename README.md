@@ -1,3 +1,13 @@
+---
+title: Agrivision Api
+emoji: ??
+colorFrom: green
+colorTo: blue
+sdk: gradio
+sdk_version: 4.36.1
+app_file: app.py
+pinned: false
+---
 # 🌾 AgriVision AI — Intelligent Crop Disease & Foliar Pathology Scanner
 
 An AI-powered foliar pathology scanner that detects crop diseases from leaf photos, localizes lesions with **Grad-CAM heatmaps**, grades foliar damage, delivers instant **Treatment & Preventive Prescriptions**, and compiles a downloadable **Agronomist Field Inspection PDF Report**.
@@ -112,3 +122,4 @@ Leaf photo ──▶ React frontend ──POST /predict──▶ FastAPI backend
 ## 📜 License & attribution
 
 MIT License. Sample leaf photos are from the [PlantVillage dataset](https://github.com/spMohanty/PlantVillage-Dataset) (Penn State, CC-BY) — for academic use with attribution. Created for agricultural AI research, crop security, and precision pathology diagnostics.
+
