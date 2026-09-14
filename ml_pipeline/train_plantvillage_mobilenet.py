@@ -428,8 +428,8 @@ def save_gradcam_montage(model, dataloader, class_names, n=6):
     target_layer = model.features[-1]
     gradcam = GradCAM(model, target_layer)
 
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
 
     fig, axes = plt.subplots(2, n, figsize=(3 * n, 6))
     collected = 0

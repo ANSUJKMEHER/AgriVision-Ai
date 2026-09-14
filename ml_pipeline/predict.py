@@ -115,8 +115,8 @@ def main():
     gradcam = GradCAM(model, model.features[-1])
     cam = gradcam.generate(x, class_idx=pred_idx)
 
-    mean = torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)
-    std = torch.tensor(IMAGENET_STD).view(1, 3, 1, 1)
+    mean = torch.tensor(IMAGENET_MEAN).view(3, 1, 1)
+    std = torch.tensor(IMAGENET_STD).view(3, 1, 1)
     disp = (x[0].cpu() * std + mean).clamp(0, 1).permute(1, 2, 0).numpy()
 
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
